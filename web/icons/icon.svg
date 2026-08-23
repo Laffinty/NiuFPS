@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="森林突围">
+  <rect width="512" height="512" rx="112" fill="#122018"/>
+  <circle cx="256" cy="256" r="186" fill="#2c6e36"/>
+  <path d="M150 260c28-54 78-78 132-62l18-56 66 22-20 78c72 8 118 42 132 88 9 29 3 62-18 86-31 36-86 54-150 44-70-11-126-48-156-98-24-40-26-65-4-102z" fill="#e6a93a"/>
+  <path d="M176 262c-14-46 22-76 74-64 34 8 60 34 62 62" fill="none" stroke="#f4cf6e" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="214" cy="286" r="13" fill="#20170a"/>
+  <circle cx="312" cy="286" r="13" fill="#20170a"/>
+  <path d="M164 214c-20-24-46-36-74-38" fill="none" stroke="#f5ead0" stroke-width="22" stroke-linecap="round"/>
+  <path d="M350 214c20-24 46-36 74-38" fill="none" stroke="#f5ead0" stroke-width="22" stroke-linecap="round"/>
+  <path d="M96 354l58 34 48-30 58 36 48-34 58 38 42-32" fill="none" stroke="#4fae63" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="468" text-anchor="middle" fill="#eaf3e9" font-size="46" font-weight="800" font-family="sans-serif">森林突围</text>
+</svg>
