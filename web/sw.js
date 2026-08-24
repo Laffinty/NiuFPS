@@ -1,4 +1,4 @@
-const CACHE_NAME = 'forest-fps-v1';
+const CACHE_NAME = 'forest-fps-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   './src/world.js',
   './src/models.js',
   './src/input.js',
+  './src/orientation-gate.js',
   './src/audio.js',
   './src/utils.js',
   './src/config.js',

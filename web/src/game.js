@@ -17,6 +17,7 @@ import {
   smooth,
 } from './utils.js';
 import { InputManager } from './input.js';
+import { OrientationGate } from './orientation-gate.js';
 import { AudioManager } from './audio.js';
 import { World } from './world.js';
 import { Player, Wolf, Snake } from './entities.js';
@@ -73,6 +74,9 @@ export class Game {
 
     this.input = new InputManager();
     this.input.attach();
+
+    this.gate = new OrientationGate((blocked) => this.onGateChange(blocked));
+    this.gate.attach();
     this.audio = new AudioManager();
 
     window.addEventListener('resize', () => this.onResize());
@@ -182,7 +186,7 @@ export class Game {
     setTimeout(() => { this.ui.message.textContent = ''; }, 5000);
 
     if (!this.input.isTouch) this.input.requestPointerLock();
-    this.input.showFullscreenPromptIfNeeded();
+    this.gate?.evaluate(true);
   }
 
   clearGame() {
@@ -695,6 +699,18 @@ export class Game {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
 
+  onGateChange(blocked) {
+    if (blocked) {
+      this.input.resetTouchState?.();
+      if (this.state === 'playing' && !this._gatePaused) {
+        this._gatePaused = true;
+        this.pause();
+      }
+    } else if (this._gatePaused) {
+      this._gatePaused = false;
+      if (this.state === 'paused') this.resume();
+    }
+  }
   pause() {
     if (this.state !== 'playing') return;
     this.state = 'paused';

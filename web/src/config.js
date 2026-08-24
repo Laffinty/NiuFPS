@@ -120,3 +120,9 @@ export const CAMERA = {
   minPitch: -0.8,
   maxPitch: 1.25,
 };
+export const TOUCH = {
+  lookSensitivity: 0.0028,
+  joystickRadius: 66,
+  joystickDeadZone: 0.14,
+  buttonMin: 48,
+};

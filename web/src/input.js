@@ -1,3 +1,5 @@
+import { TOUCH } from './config.js';
+
 export class InputManager {
   constructor() {
     this.isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 1;
@@ -79,6 +81,7 @@ export class InputManager {
 
   attachTouchControls() {
     document.getElementById('touch-controls')?.classList.add('active');
+    const moveZone = document.getElementById('move-zone');
     const stick = document.getElementById('move-joystick');
     const knob = document.getElementById('move-knob');
     const look = document.getElementById('look-area');
@@ -86,7 +89,15 @@ export class InputManager {
     const startJoystick = (event) => {
       if (this._joystickId !== null) return;
       this._joystickId = event.pointerId;
-      stick.setPointerCapture?.(event.pointerId);
+      moveZone.setPointerCapture?.(event.pointerId);
+      const rect = moveZone.getBoundingClientRect();
+      const radius = TOUCH.joystickRadius;
+      const x = Math.min(Math.max(event.clientX - rect.left, radius), Math.max(radius, rect.width - radius));
+      const y = Math.min(Math.max(event.clientY - rect.top, radius), Math.max(radius, rect.height - radius));
+      stick.style.left = `${x}px`;
+      stick.style.top = `${y}px`;
+      stick.classList.remove('hidden');
+      knob.style.transform = 'translate(-50%, -50%)';
       this._updateJoystick(event, stick, knob);
     };
 
@@ -100,13 +111,14 @@ export class InputManager {
       this._joystickId = null;
       this.moveAxis.x = 0;
       this.moveAxis.z = 0;
+      stick.classList.add('hidden');
       knob.style.transform = 'translate(-50%, -50%)';
     };
 
-    stick.addEventListener('pointerdown', startJoystick);
-    stick.addEventListener('pointermove', moveJoystick);
-    stick.addEventListener('pointerup', endJoystick);
-    stick.addEventListener('pointercancel', endJoystick);
+    moveZone.addEventListener('pointerdown', startJoystick);
+    moveZone.addEventListener('pointermove', moveJoystick);
+    moveZone.addEventListener('pointerup', endJoystick);
+    moveZone.addEventListener('pointercancel', endJoystick);
 
     const startLook = (event) => {
       if (this._lookId !== null) return;
@@ -159,18 +171,7 @@ export class InputManager {
       this._requestedWeapon = this._requestedWeapon === 'ak47' ? 'headbutt' : 'ak47';
     });
     tap('btn-view', () => { this.viewPressed = true; });
-
-    const fullscreen = document.getElementById('fullscreen-prompt');
-    if (fullscreen) {
-      fullscreen.addEventListener('click', () => {
-        const root = document.documentElement;
-        if (root.requestFullscreen) root.requestFullscreen();
-        else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
-        fullscreen.classList.add('hidden');
-      });
-    }
   }
-
   _updateJoystick(event, stick, knob) {
     const rect = stick.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
@@ -184,7 +185,8 @@ export class InputManager {
       dy = (dy / length) * max;
     }
     knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    const norm = Math.min(1, Math.hypot(dx, dy) / max);
+    const raw = Math.hypot(dx, dy) / max;
+    const norm = raw <= TOUCH.joystickDeadZone ? 0 : Math.min(1, (raw - TOUCH.joystickDeadZone) / (1 - TOUCH.joystickDeadZone));
     const angle = Math.atan2(dx, -dy);
     this.moveAxis.x = Math.sin(angle) * norm;
     this.moveAxis.z = -Math.cos(angle) * norm;
@@ -258,9 +260,18 @@ export class InputManager {
     return this.isTouch ? this.fireHeld : this.mouseDown;
   }
 
-  showFullscreenPromptIfNeeded() {
-    if (!this.isTouch) return;
-    const full = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!full) document.getElementById('fullscreen-prompt')?.classList.remove('hidden');
+  resetTouchState() {
+    this.fireHeld = false;
+    this.jumpPressed = false;
+    this.crouchHeld = false;
+    this.reloadPressed = false;
+    this.viewPressed = false;
+    this.moveAxis.x = 0;
+    this.moveAxis.z = 0;
+    this.touchLook.x = 0;
+    this.touchLook.y = 0;
+    this._joystickId = null;
+    this._lookId = null;
+    this._lookLast = null;
   }
 }

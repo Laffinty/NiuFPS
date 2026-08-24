@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#122018" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="黄牛FPS" />
     <meta name="description" content="原创黄牛生存射击 Web 3D FPS：一头直立行走的黄牛，手持 AK-47，穿过狼群与毒蛇抵达集结点。" />
     <title>森林突围：黄牛 FPS</title>
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
@@ -84,21 +88,34 @@
 
       <button id="btn-pause" class="icon-button" aria-label="暂停">Ⅱ</button>
 
-      <div id="touch-controls">
-        <div id="move-joystick"><div id="move-knob"></div></div>
-        <div id="look-area"></div>
-        <div class="touch-actions">
-          <button id="btn-fire" class="touch-button fire">开火</button>
-          <button id="btn-jump" class="touch-button">跳跃</button>
-          <button id="btn-crouch" class="touch-button">蹲下</button>
-          <button id="btn-reload" class="touch-button">换弹</button>
-          <button id="btn-weapon" class="touch-button">切枪</button>
-          <button id="btn-view" class="touch-button">视角</button>
+            <div id="touch-controls">
+        <div id="move-zone">
+          <div id="move-joystick" class="hidden"><div id="move-knob"></div></div>
         </div>
+        <div id="look-area"></div>
+        <div class="touch-pad touch-pad-left">
+          <button id="btn-jump" class="touch-button" aria-label="跳跃"><span class="tb-icon" aria-hidden="true">↑</span></button>
+          <button id="btn-crouch" class="touch-button" aria-label="蹲下"><span class="tb-icon" aria-hidden="true">↓</span></button>
+        </div>
+        <div class="touch-pad touch-pad-actions">
+          <button id="btn-reload" class="touch-button" aria-label="换弹"><span class="tb-icon" aria-hidden="true">↻</span></button>
+          <button id="btn-weapon" class="touch-button" aria-label="切枪"><span class="tb-icon" aria-hidden="true">⇄</span></button>
+        </div>
+        <div class="touch-pad touch-pad-fire">
+          <button id="btn-fire" class="touch-button fire" aria-label="开火"><span class="tb-icon" aria-hidden="true">●</span></button>
+        </div>
+        <button id="btn-view" class="touch-button" aria-label="视角切换"><span class="tb-icon" aria-hidden="true">◉</span></button>
       </div>
     </div>
 
-    <div id="fullscreen-prompt" class="hidden">点击进入全屏，获得最佳手机体验</div>
+    <div id="fullscreen-gate" class="hidden">
+      <div class="gate-panel">
+        <div class="gate-icon" aria-hidden="true">⛶</div>
+        <button id="fullscreen-btn" class="gate-button">⛶ 全屏</button>
+        <p id="fullscreen-msg" class="gate-message">为获得最佳体验，请使用横屏全屏模式</p>
+        <p id="fullscreen-sub" class="gate-sub"></p>
+      </div>
+    </div>
 
     <section id="pause-screen" class="screen hidden">
       <div class="panel">

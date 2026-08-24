@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three/three.module.js';
 import {
   PLAYER,
+  TOUCH,
   WEAPONS,
   WOLF,
   SNAKE,
@@ -193,7 +194,7 @@ export class Player {
     }
 
     const look = this.input.consumeLook();
-    const sensitivity = PLAYER.mouseSensitivity * (this.input.isTouch ? 1.35 : 1);
+    const sensitivity = this.input.isTouch ? TOUCH.lookSensitivity : PLAYER.mouseSensitivity;
     this.yaw -= look.x * sensitivity;
     this.pitch -= look.y * sensitivity;
     this.pitch = clamp(this.pitch, -1.25, 1.25);
