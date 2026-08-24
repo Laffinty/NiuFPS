@@ -27,6 +27,19 @@ python tools/validate_web.py
 
 ## 部署到 GitHub Pages
 
-将仓库推送到 GitHub，在 Settings → Pages 中选择 **Deploy from a branch**，目录选择 `/web` 即可。详细说明见 [docs/BUILD_AND_DEPLOY.md](docs/BUILD_AND_DEPLOY.md)。
+仓库已自带 `.github/workflows/deploy.yml`，推荐使用 GitHub Actions 自动部署：
+
+1. 推送代码到 GitHub：
+
+   ```bash
+   git push origin main
+   ```
+
+2. 在 **Settings → Pages → Source** 选择 **GitHub Actions**。
+3. 之后每次推送到 `main` 都会自动重新部署。
+
+访问地址：<https://laffinty.github.io/NiuFPS/>
+
+详细说明见 [docs/BUILD_AND_DEPLOY.md](docs/BUILD_AND_DEPLOY.md)。
 
 > 本作完全原创，所有模型与音效均在浏览器端程序化生成。

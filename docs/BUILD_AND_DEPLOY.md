@@ -48,16 +48,51 @@ copy node_modules\three\build\three.core.js vendor\three\three.core.js
 
 ## 4. 部署到 GitHub Pages
 
-1. 将整个仓库推送到 GitHub。
-2. 进入仓库 **Settings → Pages**。
-3. 在 **Build and deployment** 中选择 **Deploy from a branch**。
-4. Branch 选择 `main`（或你的默认分支），Folder 选择 `/web`。
-5. 保存后等待 GitHub Pages 构建完成。
+仓库自带 `.github/workflows/deploy.yml`，推荐使用 GitHub Actions 自动化部署（每次推送到 `main` 自动发布）；同时保留从分支直接部署的备选方案。
 
-站点会发布到：
+### 方案 A：GitHub Actions 自动部署（推荐）
+
+1. 将仓库推送到 GitHub：
+
+   ```bash
+   git push origin main
+   ```
+
+2. 进入 **Settings → Pages**。
+3. 在 **Build and deployment → Source** 选择 **GitHub Actions**。
+4. 保存后 GitHub 会提示创建一个 `github-pages` environment，同意即可。
+5. 工作流会自动构建并发布 `web/` 目录。
+
+工作流文件：`.github/workflows/deploy.yml`，主要步骤：
+
+- `actions/checkout@v4` 拉取代码
+- `actions/configure-pages@v5` 初始化 Pages 上下文
+- `actions/upload-pages-artifact@v3` 将 `./web` 打包为 artifact
+- `actions/deploy-pages@v4` 部署到 GitHub Pages
+
+之后每次推送到 `main` 都会自动重新部署；也可以在 Actions 页面手动触发 `workflow_dispatch`。
+
+### 方案 B：从分支直接部署（备选）
+
+如果不希望使用 Actions：
+
+1. 进入 **Settings → Pages**。
+2. 在 **Build and deployment** 中选择 **Deploy from a branch**。
+3. Branch 选择 `main`，Folder 选择 `/web`。
+4. 保存后等待 GitHub Pages 构建完成。
+
+### 访问地址
+
+部署完成后，站点会发布到：
 
 ```text
 https://<用户名>.github.io/<仓库名>/
+```
+
+本仓库的用户/仓库名为 `Laffinty/NiuFPS`，发布后地址为：
+
+```text
+https://laffinty.github.io/NiuFPS/
 ```
 
 项目使用相对路径和本地模块导入，因此部署在子路径下也能正常工作。
