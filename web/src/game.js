@@ -13,6 +13,8 @@ import {
   clamp,
   distance2D,
   raycastCylinder,
+  lerp,
+  smooth,
 } from './utils.js';
 import { InputManager } from './input.js';
 import { AudioManager } from './audio.js';
@@ -305,17 +307,23 @@ export class Game {
     if (this.player.viewMode === 'first') {
       this.camera.position.copy(eye);
       this.camera.rotation.order = 'YXZ';
-      this.camera.rotation.y = this.player.yaw + this.player.recoilYaw;
-      this.camera.rotation.x = this.player.pitch + this.player.recoilPitch;
+      const camYaw = this.player.yaw + this.player.recoilYaw;
+      const camPitch = this.player.pitch + this.player.recoilPitch;
+      this.camera.rotation.y = camYaw;
+      this.camera.rotation.x = camPitch;
       this.camera.rotation.z = 0;
 
-      const bob = Math.sin(time * 8.2) * 0.012;
+      // 第一人称武器：位置贴在眼睛上，旋转对相机做轻微滞后，让枪"沉一些"。
       this.player.arms.position.copy(eye);
-      this.player.arms.rotation.order = 'YXZ';
-      this.player.arms.rotation.y = this.camera.rotation.y;
-      this.player.arms.rotation.x = this.camera.rotation.x;
-      this.player.arms.position.y += bob;
       this.player.arms.visible = this.player.weapon === 'ak47';
+      this.player.arms.rotation.order = 'YXZ';
+      const armLag = Math.min(1, dt * 22);
+      this.player.arms.rotation.y = lerp(this.player.arms.rotation.y, camYaw, armLag);
+      this.player.arms.rotation.x = lerp(this.player.arms.rotation.x, camPitch, armLag);
+      this.player.arms.rotation.z = 0;
+
+      // 在 arms 内部的 gunHolder 上叠加 sway / bob / 后坐力 / 换弹。
+      this.applyWeaponAnimation(dt, time);
     } else {
       const forward = this.player.forward;
       const behind = forward.clone().multiplyScalar(-1);
@@ -329,6 +337,133 @@ export class Game {
       this.player.arms.visible = false;
     }
     this.camera.updateMatrixWorld();
+  }
+
+  applyWeaponAnimation(dt, time) {
+    const player = this.player;
+    const gunHolder = player.gunHolder;
+    if (!gunHolder || !player.weaponRestPos) return;
+
+    // === 1. 重置到静止位姿 ===
+    gunHolder.position.copy(player.weaponRestPos);
+    gunHolder.rotation.copy(player.weaponRestRot);
+    player.gunMagazine.position.copy(player.magazineRestPos);
+    player.gunChargingHandle.position.copy(player.chargingHandleRestPos);
+    player.gunMagazine.rotation.set(0, 0, 0);
+    player.gunChargingHandle.rotation.set(0, 0, 0);
+
+    // === 2. Idle sway（呼吸式微动） ===
+    player.swayTime += dt;
+    const swayX = Math.sin(player.swayTime * 0.85) * 0.0035;
+    const swayY = Math.sin(player.swayTime * 1.05 + 1.3) * 0.0028;
+    const swayRoll = Math.sin(player.swayTime * 0.7) * 0.0035;
+    gunHolder.position.x += swayX;
+    gunHolder.position.y += swayY;
+    gunHolder.rotation.z += swayRoll;
+
+    // === 3. 走路 / 跑步 bob ===
+    if (player.moving && player.onGround) {
+      const bobFreq = player.crouching ? 6.5 : (player.input.isWalking?.() ? 7.5 : 10.5);
+      player.bobTime += dt * bobFreq;
+      const phase = player.bobTime * 2 * Math.PI;
+      const amplitudeY = player.crouching ? 0.006 : (player.input.isWalking?.() ? 0.008 : 0.015);
+      const amplitudeX = player.crouching ? 0.003 : (player.input.isWalking?.() ? 0.004 : 0.007);
+      gunHolder.position.y += Math.sin(phase) * amplitudeY;
+      gunHolder.position.x += Math.cos(phase) * amplitudeX;
+      // 侧倾
+      gunHolder.rotation.z += Math.sin(phase) * 0.012;
+    }
+
+    // === 4. 后坐力（来自开火 impulse，每帧弹簧回弹） ===
+    gunHolder.rotation.x += player.weaponKickPitch;
+    gunHolder.rotation.y += player.weaponKickYaw;
+    gunHolder.position.z += player.weaponKickZ;
+
+    // === 5. 换弹动画（按 reloadProgress 分阶段） ===
+    if (player.reloading) {
+      const p = player.reloadProgress();
+      // 换弹中 sway/bob 让位，让位姿过渡更稳定。
+      const t = clamp(p, 0, 1);
+      this.applyReloadAnimation(t);
+    }
+  }
+
+  applyReloadAnimation(progress) {
+    const player = this.player;
+    const gunHolder = player.gunHolder;
+    const magazine = player.gunMagazine;
+    const chargingHandle = player.gunChargingHandle;
+
+    // 0.00 - 0.18：武器向右下方倾斜（抬枪托，露出弹匣）
+    // 0.18 - 0.32：弹匣从枪上掉落
+    // 0.32 - 0.55：新弹匣插入
+    // 0.55 - 0.70：拉机柄向后拉（同时枪开始回正）
+    // 0.70 - 1.00：武器完全回到待击位
+
+    const phaseTilt = 0.18;
+    const phaseDrop = 0.32;
+    const phaseInsert = 0.55;
+    const phaseCharge = 0.70;
+
+    // 倾斜角峰值（弧度）：抬枪托 + 向右翻转
+    const tiltRollMax = 0.55;
+    const tiltPitchMax = 0.32;
+    const tiltDropY = -0.07;
+    const tiltDropZ = 0.05;
+
+    if (progress < phaseTilt) {
+      const t = smooth(progress / phaseTilt);
+      gunHolder.rotation.z = t * tiltRollMax;
+      gunHolder.rotation.x = t * tiltPitchMax;
+      gunHolder.position.y += t * tiltDropY;
+      gunHolder.position.z += t * tiltDropZ;
+    } else if (progress < phaseDrop) {
+      const t = smooth((progress - phaseTilt) / (phaseDrop - phaseTilt));
+      gunHolder.rotation.z = tiltRollMax;
+      gunHolder.rotation.x = tiltPitchMax;
+      gunHolder.position.y += tiltDropY;
+      gunHolder.position.z += tiltDropZ;
+      // 弹匣向下前方掉落
+      magazine.position.y = player.magazineRestPos.y - t * 0.18;
+      magazine.position.z = player.magazineRestPos.z + t * 0.08;
+      magazine.rotation.x = t * 0.7;
+      player.magazineDropped = true;
+    } else if (progress < phaseInsert) {
+      // 维持倾斜，新弹匣从下方升入
+      gunHolder.rotation.z = tiltRollMax;
+      gunHolder.rotation.x = tiltPitchMax;
+      gunHolder.position.y += tiltDropY;
+      gunHolder.position.z += tiltDropZ;
+      const t = smooth((progress - phaseDrop) / (phaseInsert - phaseDrop));
+      magazine.position.y = player.magazineRestPos.y - 0.18 + t * 0.18;
+      magazine.position.z = player.magazineRestPos.z + 0.08 - t * 0.08;
+      magazine.rotation.x = 0.7 - t * 0.7;
+      player.magazineInserted = true;
+    } else if (progress < phaseCharge) {
+      // 拉机柄 + 武器开始回正
+      const t = (progress - phaseInsert) / (phaseCharge - phaseInsert);
+      const insertT = smooth(t);
+      const ease = insertT < 0.5 ? 2 * insertT * insertT : 1 - Math.pow(-2 * insertT + 2, 2) / 2;
+      gunHolder.rotation.z = tiltRollMax * (1 - ease);
+      gunHolder.rotation.x = tiltPitchMax * (1 - ease);
+      gunHolder.position.y += tiltDropY * (1 - ease);
+      gunHolder.position.z += tiltDropZ * (1 - ease);
+      // 拉机柄向后拉（向右，+X 方向，因为 chargingHandle 在右侧）
+      chargingHandle.position.x = player.chargingHandleRestPos.x + ease * 0.045;
+    } else {
+      // 完全回正 + 拉机柄回弹
+      const t = (progress - phaseCharge) / (1 - phaseCharge);
+      const eased = smooth(t);
+      gunHolder.rotation.z = 0;
+      gunHolder.rotation.x = 0;
+      gunHolder.position.y = player.weaponRestPos.y;
+      gunHolder.position.z = player.weaponRestPos.z;
+      // 拉机柄回弹
+      const chargeT = clamp((progress - phaseInsert) / (phaseCharge - phaseInsert), 0, 1);
+      const chargeEase = chargeT < 0.5 ? 2 * chargeT * chargeT : 1 - Math.pow(-2 * chargeT + 2, 2) / 2;
+      const remaining = 1 - eased;
+      chargingHandle.position.x = player.chargingHandleRestPos.x + chargeEase * 0.045 * remaining;
+    }
   }
 
   updateCombat(dt) {
@@ -392,9 +527,18 @@ export class Game {
     player.recoilHeat = clamp(player.recoilHeat + weapon.recoilPerShot, 0, weapon.maxRecoilSpread);
     player.recoilPitch = clamp(player.recoilPitch + weapon.recoilPerShot * 1.35, 0, 0.12);
     player.recoilYaw += (Math.random() - 0.5) * 0.008;
+    // 给 viewmodel 枪身施加视觉后坐力冲量。
+    player.applyFireKick(1);
     player.ammo -= 1;
 
-    const muzzle = origin.clone().addScaledVector(direction, 0.55);
+    // 枪口位置优先取模型自带的 muzzlePoint，否则用旧算法（兜底）。
+    let muzzle;
+    if (player.gunMuzzlePoint) {
+      player.arms.updateMatrixWorld(true);
+      muzzle = player.gunMuzzlePoint.getWorldPosition(new THREE.Vector3());
+    } else {
+      muzzle = origin.clone().addScaledVector(direction, 0.55);
+    }
     this.spawnTracer(muzzle, hitPoint);
     this.spawnMuzzleFlash(muzzle, direction);
     this.audio.gunshot();

@@ -55,6 +55,11 @@ export class Player {
     this.input = input;
     this.model = createCowModel();
     this.arms = createFirstPersonArms();
+    this.gunHolder = this.arms.userData.gunHolder;
+    this.gun = this.arms.userData.gun;
+    this.gunMagazine = this.arms.userData.magazine;
+    this.gunChargingHandle = this.arms.userData.chargingHandle;
+    this.gunMuzzlePoint = this.arms.userData.muzzlePoint;
     this.object = new THREE.Group();
     this.object.add(this.model);
     this.arms.visible = false;
@@ -84,6 +89,28 @@ export class Player {
     this.recoilHeat = 0;
     this.animationTime = 0;
     this.hurtFlash = 0;
+
+    // === 武器 viewmodel 动画状态 ===
+    // 枪身自身的后坐力偏移（相对于静止位姿），由开火施加，按弹簧衰减。
+    this.weaponKickPitch = 0; // 向上旋转的角度
+    this.weaponKickYaw = 0;   // 横向偏移
+    this.weaponKickZ = 0;     // 向相机方向回退
+    // 武器基础位姿（gunHolder 在 arms 中的静止位置）
+    this.weaponRestPos = this.gunHolder.position.clone();
+    this.weaponRestRot = this.gunHolder.rotation.clone();
+    // 弹药匣局部基准位姿（用于换弹时计算相对偏移）
+    this.magazineRestPos = this.gunMagazine.position.clone();
+    this.chargingHandleRestPos = this.gunChargingHandle.position.clone();
+    // sway / bob 时间累加
+    this.swayTime = 0;
+    this.bobTime = 0;
+    // 走路步幅相位（与腿动作联动）
+    this.stepPhase = 0;
+    // 换弹阶段时间累加（reloadStart 到 reloadEnd）
+    this.reloadAnimTime = 0;
+    this.reloadAmmoOnStart = 0;     // 换弹开始时的弹匣数，用于触发弹匣切换动画
+    this.magazineDropped = false;   // 旧弹匣是否已经"消失"
+    this.magazineInserted = false;  // 新弹匣是否已经放回
   }
 
   spawn(position, yaw = Math.PI) {
@@ -97,7 +124,24 @@ export class Player {
     this.ammo = WEAPONS.ak47.magazine;
     this.reserve = WEAPONS.ak47.reserve;
     this.weapon = 'ak47';
+    this.resetWeaponAnimation();
     this.updateModelVisibility();
+  }
+
+  resetWeaponAnimation() {
+    // 重置 viewmodel 动画到静止状态。
+    this.weaponKickPitch = 0;
+    this.weaponKickYaw = 0;
+    this.weaponKickZ = 0;
+    this.reloadAnimTime = 0;
+    this.magazineDropped = false;
+    this.magazineInserted = false;
+    if (this.gunHolder) {
+      this.gunHolder.position.copy(this.weaponRestPos);
+      this.gunHolder.rotation.copy(this.weaponRestRot);
+    }
+    if (this.gunMagazine) this.gunMagazine.position.copy(this.magazineRestPos);
+    if (this.gunChargingHandle) this.gunChargingHandle.position.copy(this.chargingHandleRestPos);
   }
 
   get forward() {
@@ -218,6 +262,14 @@ export class Player {
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.4);
   }
 
+  applyFireKick(strength = 1) {
+    // 开火瞬间给 viewmodel 枪身施加一个瞬时后坐力偏移。
+    // 数值偏大以让玩家能"看见"后坐力，再用弹簧阻尼每帧回弹。
+    this.weaponKickPitch += 0.085 * strength;
+    this.weaponKickYaw += (Math.random() - 0.5) * 0.025 * strength;
+    this.weaponKickZ += 0.022 * strength;
+  }
+
   updateWeapon(dt) {
     this.fireCooldown = Math.max(0, this.fireCooldown - dt);
     this.headbuttCooldown = Math.max(0, this.headbuttCooldown - dt);
@@ -225,6 +277,13 @@ export class Player {
     this.recoilPitch = lerp(this.recoilPitch, 0, dt * 8);
     this.recoilYaw = lerp(this.recoilYaw, 0, dt * 8);
 
+    // === 枪身视觉后坐力的弹簧阻尼回弹 ===
+    const kickRecover = 1 - Math.exp(-dt * 14);
+    this.weaponKickPitch = lerp(this.weaponKickPitch, 0, kickRecover);
+    this.weaponKickYaw = lerp(this.weaponKickYaw, 0, kickRecover);
+    this.weaponKickZ = lerp(this.weaponKickZ, 0, kickRecover);
+
+    // === 换弹倒计时 + 状态机 ===
     if (this.reloading) {
       this.reloadTimer -= dt;
       if (this.reloadTimer <= 0) {
@@ -234,6 +293,8 @@ export class Player {
         this.ammo += take;
         this.reserve -= take;
         this.reloading = false;
+        this.magazineDropped = false;
+        this.magazineInserted = false;
       }
     }
   }
@@ -243,7 +304,17 @@ export class Player {
     if (this.ammo >= WEAPONS.ak47.magazine || this.reserve <= 0) return false;
     this.reloading = true;
     this.reloadTimer = WEAPONS.ak47.reloadTime;
+    // 换弹时清掉残留的后坐力偏移，避免与换弹动画叠加出现抖。
+    this.weaponKickPitch = Math.min(this.weaponKickPitch, 0.02);
+    this.weaponKickYaw = 0;
+    this.weaponKickZ = 0;
     return true;
+  }
+
+  reloadProgress() {
+    if (!this.reloading) return 0;
+    const config = WEAPONS.ak47;
+    return 1 - Math.max(0, this.reloadTimer) / config.reloadTime;
   }
 
   takeDamage(amount) {
