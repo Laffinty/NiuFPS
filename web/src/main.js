@@ -10,7 +10,15 @@ document.getElementById('pause-restart-button')?.addEventListener('click', () =>
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    // 使用相对于站点根的 scope，避免子路径部署（如 /NiuFPS/）下 SW 失效。
+    const swUrl = new URL('./sw.js', document.baseURI).toString();
+    navigator.serviceWorker
+      .register(swUrl, { updateViaCache: 'none' })
+      .then((registration) => {
+        // 每页加载都向服务器问一次是否有新 SW；命中后让 SW 自己接管页面
+        registration.update().catch(() => {});
+      })
+      .catch(() => {});
   });
 }
 

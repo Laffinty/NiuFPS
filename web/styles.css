@@ -31,6 +31,29 @@ body {
   user-select: none;
 }
 
+/* 启动 / 暂停 / 结束页：始终显示系统光标，避免在菜单态时鼠标被吞掉 */
+#start-screen,
+#pause-screen,
+#end-screen,
+#fullscreen-gate {
+  cursor: default;
+}
+
+#start-screen button,
+#pause-screen button,
+#end-screen button,
+#fullscreen-gate .gate-button,
+#start-screen .difficulty-button,
+#start-screen .menu-panel {
+  cursor: pointer;
+}
+
+/* 游戏中：隐藏光标，瞄准与开火用 crosshair 代替 */
+#hud:not(.hidden) ~ #game-canvas,
+body.state-playing #game-canvas {
+  cursor: none;
+}
+
 .game-canvas {
   display: block;
   position: fixed;

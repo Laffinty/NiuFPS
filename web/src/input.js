@@ -21,6 +21,10 @@ export class InputManager {
   }
 
   attach() {
+    // 仅在游戏进行中（playing/暂停菜单）才允许锁鼠标；启动/结束/失败页保持系统光标。
+    this._pointerLockAllowed = () =>
+      !this.isTouch && !this.isMenuScreenVisible();
+
     window.addEventListener('keydown', (event) => {
       if (event.repeat) return;
       this.keys.add(event.code);
@@ -50,7 +54,8 @@ export class InputManager {
     document.addEventListener('mousedown', (event) => {
       if (event.button !== 0) return;
       this.mouseDown = true;
-      if (!this.locked && !this.isTouch) this.requestPointerLock();
+      // 仅在游戏中锁定指针，避免启动/结算页吃掉鼠标光标
+      if (!this.locked && this._pointerLockAllowed()) this.requestPointerLock();
     });
 
     document.addEventListener('mouseup', (event) => {
@@ -67,6 +72,16 @@ export class InputManager {
   requestPointerLock() {
     const el = document.getElementById('game-canvas');
     if (el && el.requestPointerLock) el.requestPointerLock();
+  }
+
+  // 启动页 / 结算页 / 暂停页任一可见时，都视作「菜单态」，不锁鼠标。
+  isMenuScreenVisible() {
+    const ids = ['start-screen', 'end-screen', 'pause-screen', 'fullscreen-gate'];
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('hidden')) return true;
+    }
+    return false;
   }
 
   requestWeapon(key) {

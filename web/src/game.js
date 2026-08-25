@@ -221,7 +221,7 @@ export class Game {
     this.ui.message.textContent = '穿过森林，抵达红色集结旗。蛇咬必死！';
     setTimeout(() => { this.ui.message.textContent = ''; }, 5000);
 
-    if (!this.input.isTouch) this.input.requestPointerLock();
+    if (!this.input.isTouch && !this.input.isMenuScreenVisible()) this.input.requestPointerLock();
     this.gate?.evaluate(true);
   }
 
@@ -762,7 +762,7 @@ export class Game {
     this.ui.hud.classList.remove('hidden');
     this.timer.update();
     this.timer.getDelta();
-    if (!this.input.isTouch) this.input.requestPointerLock();
+    if (!this.input.isTouch && !this.input.isMenuScreenVisible()) this.input.requestPointerLock();
   }
 
   togglePause() {
