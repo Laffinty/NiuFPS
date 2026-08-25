@@ -21,6 +21,7 @@ import { OrientationGate } from './orientation-gate.js';
 import { AudioManager } from './audio.js';
 import { World } from './world.js';
 import { Player, Wolf, Snake } from './entities.js';
+import { HeroScene } from './hero-scene.js';
 
 export class Game {
   constructor() {
@@ -79,6 +80,12 @@ export class Game {
     this.gate.attach();
     this.audio = new AudioManager();
 
+    // 主菜单牛主角 hero 立绘：进入游戏前常驻，进入游戏后停止以释放 GPU。
+    if (this.ui.heroCanvas) {
+      this.hero = new HeroScene(this.ui.heroCanvas);
+      this.hero.start();
+    }
+
     window.addEventListener('resize', () => this.onResize());
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Escape') this.togglePause();
@@ -92,8 +99,14 @@ export class Game {
   cacheUi() {
     this.ui.startScreen = document.getElementById('start-screen');
     this.ui.startButton = document.getElementById('start-button');
-    this.ui.difficulty = document.getElementById('difficulty');
-    this.ui.perspective = document.getElementById('perspective');
+    this.ui.difficultyButtons = Array.from(
+      document.querySelectorAll('[data-difficulty]'),
+    );
+    this.ui.difficultySelect = document.getElementById('difficulty');
+    this.ui.difficulty = this.ui.difficultyButtons.length
+      ? { value: this.readDifficultyKey() }
+      : this.ui.difficultySelect;
+    this.ui.heroCanvas = document.getElementById('menu-hero');
     this.ui.wolfCount = document.getElementById('wolf-count');
     this.ui.hud = document.getElementById('hud');
     this.ui.healthFill = document.getElementById('health-fill');
@@ -116,12 +129,32 @@ export class Game {
     this.ui.message = document.getElementById('game-message');
   }
 
+  readDifficultyKey() {
+    const selected = this.ui.difficultyButtons.find((btn) => btn.classList.contains('selected'));
+    return selected?.dataset.difficulty || 'normal';
+  }
+
   bindUiEvents() {
     this.ui.startButton.addEventListener('click', () => {
       this.audio.init();
       this.startFromMenu();
     });
-    this.ui.difficulty.addEventListener('change', () => this.updateWolfPreview());
+    if (this.ui.difficultyButtons.length) {
+      this.ui.difficultyButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.ui.difficultyButtons.forEach((other) => {
+            const isSelf = other === btn;
+            other.classList.toggle('selected', isSelf);
+            other.setAttribute('aria-pressed', isSelf ? 'true' : 'false');
+          });
+          this.ui.difficulty.value = btn.dataset.difficulty;
+          this.updateWolfPreview();
+        });
+      });
+    }
+    if (this.ui.difficultySelect) {
+      this.ui.difficultySelect.addEventListener('change', () => this.updateWolfPreview());
+    }
     this.ui.restartButton.addEventListener('click', () => {
       this.audio.init();
       this.startFromMenu();
@@ -139,7 +172,9 @@ export class Game {
   updateWolfPreview() {
     const diff = DIFFICULTY[this.ui.difficulty.value] || DIFFICULTY.normal;
     const count = Math.round(WOLF.baseCount * diff.wolfScale);
-    this.ui.wolfCount.textContent = `${count} 只狼`;
+    if (this.ui.wolfCount) {
+      this.ui.wolfCount.textContent = `${diff.label} · ${count} 只狼`;
+    }
   }
 
   startFromMenu() {
@@ -147,7 +182,7 @@ export class Game {
     this.settings = {
       difficultyKey: this.ui.difficulty.value,
       difficulty,
-      viewMode: this.ui.perspective.value === 'third' ? 'third' : 'first',
+      viewMode: 'first',
       seed: Math.floor(Math.random() * 0x7fffffff),
       startTime: 0,
     };
@@ -156,6 +191,7 @@ export class Game {
 
   startGame(settings) {
     this.clearGame();
+    this.hero?.stop();
     this.state = 'playing';
     this.elapsed = 0;
     this.kills = 0;
@@ -665,7 +701,7 @@ export class Game {
   checkEndConditions() {
     if (this.state !== 'playing') return;
     if (!this.player.alive) {
-      this.endGame(false, '黄牛倒在了森林里');
+      this.endGame(false, '牛倒在了森林里');
       return;
     }
     const dist = distance2D(this.player.position, this.world.goal);

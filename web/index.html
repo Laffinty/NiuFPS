@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="黄牛FPS" />
-    <meta name="description" content="原创黄牛生存射击 Web 3D FPS：一头直立行走的黄牛，手持 AK-47，穿过狼群与毒蛇抵达集结点。" />
-    <title>森林突围：黄牛 FPS</title>
+    <meta name="apple-mobile-web-app-title" content="NiuFPS" />
+    <meta name="description" content="牛FPS · NiuFPS：原创 Web 3D 生存射击。直立行走的牛，手持 AK-47，穿过狼群与毒蛇抵达集结点。" />
+    <title>牛FPS · NiuFPS</title>
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
@@ -17,37 +17,37 @@
   <body>
     <div id="game-root" aria-hidden="true"></div>
 
-    <section id="start-screen" class="screen">
-      <div class="panel">
-        <div class="brand">
-          <span class="brand-mark">牛</span>
-          <h1>森林突围：黄牛 FPS</h1>
+    <section id="start-screen" class="screen menu-screen">
+      <div class="menu-glow" aria-hidden="true"></div>
+      <div class="menu-scanlines" aria-hidden="true"></div>
+      <div class="menu-layout">
+        <div class="menu-hero">
+          <canvas id="menu-hero" aria-label="牛主角立绘"></canvas>
+          <div class="menu-hero-tag" aria-hidden="true">HERO SHOT · 牛主角</div>
         </div>
-        <p class="tagline">原创黄牛生存射击 · 开局一把 AK-47，穿过狼群与毒蛇抵达集结点</p>
+        <div class="panel menu-panel">
+          <div class="brand">
+            <span class="brand-mark">牛</span>
+            <div class="brand-titles">
+              <h1>牛FPS</h1>
+              <p class="brand-en">NiuFPS</p>
+            </div>
+          </div>
+          <p class="tagline">开局一把 AK-47，穿过狼群与毒蛇抵达集结点</p>
 
-        <div class="field">
-          <label for="difficulty">难度</label>
-          <select id="difficulty">
-            <option value="easy">简单</option>
-            <option value="normal" selected>普通</option>
-            <option value="hard">困难</option>
-          </select>
-          <div id="wolf-count" class="field-note">100 只狼</div>
-        </div>
+          <div class="difficulty-group" role="radiogroup" aria-label="难度">
+            <button type="button" class="difficulty-button" data-difficulty="hard" aria-pressed="false">高</button>
+            <button type="button" class="difficulty-button selected" data-difficulty="normal" aria-pressed="true">中</button>
+            <button type="button" class="difficulty-button" data-difficulty="easy" aria-pressed="false">低</button>
+          </div>
+          <div id="wolf-count" class="field-note">中 · 100 只狼</div>
 
-        <div class="field">
-          <label for="perspective">默认视角</label>
-          <select id="perspective">
-            <option value="first" selected>第一人称</option>
-            <option value="third">第三人称</option>
-          </select>
-        </div>
+          <button id="start-button" class="primary-button">开始游戏</button>
 
-        <button id="start-button" class="primary-button">进入森林</button>
-
-        <div class="controls-hint">
-          <p><strong>PC</strong>：WASD 移动 · 鼠标瞄准 · 左键射击 · 1/2 切枪 · R 换弹 · V 视角 · Space 跳 · Ctrl 蹲</p>
-          <p><strong>手机</strong>：左摇杆移动 · 右半屏拖动视角 · 右侧按钮开火/跳跃/蹲下/换弹</p>
+          <div class="controls-hint">
+            <p><strong>PC</strong>：WASD 移动 · 鼠标瞄准 · 左键射击 · 1/2 切枪 · R 换弹 · V 视角 · Space 跳 · Ctrl 蹲</p>
+            <p><strong>手机</strong>：左摇杆移动 · 右半屏拖动视角 · 右侧按钮开火/跳跃/蹲下/换弹</p>
+          </div>
         </div>
       </div>
     </section>
@@ -120,7 +120,7 @@
     <section id="pause-screen" class="screen hidden">
       <div class="panel">
         <h2>暂停</h2>
-        <p>黄牛停下脚步，狼群仍在森林里游荡。</p>
+        <p>牛停下脚步，狼群仍在森林里游荡。</p>
         <button id="resume-button" class="primary-button">继续游戏</button>
         <button id="pause-restart-button" class="secondary-button">重新开始</button>
       </div>

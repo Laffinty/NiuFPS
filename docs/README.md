@@ -1,4 +1,4 @@
-# ForestFPS 项目文档
+# NiuFPS 项目文档
 
 ## 文档索引
 
@@ -6,6 +6,7 @@
 - [CONTROLS.md](./CONTROLS.md)：PC / 手机端完整键位与操作
 - [BUILD_AND_DEPLOY.md](./BUILD_AND_DEPLOY.md)：本地运行、构建校验与 GitHub Pages 部署
 - [RESEARCH.md](./RESEARCH.md)：原创动画设定调研与 Web 3D 技术调研
+- [CHANGELOG.md](./CHANGELOG.md)：版本级变更、关键功能交付与设计决策摘要
 
 ## 快速导航
 

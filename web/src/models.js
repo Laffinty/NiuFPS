@@ -11,7 +11,10 @@ function mat(color, options = {}) {
   });
 }
 
-export function createCowModel() {
+export function createCowModel(options = {}) {
+  // pose: 'combat'（默认，游戏内造型）/ 'hero'（主菜单立绘）
+  const pose = options.pose || 'combat';
+  const withGun = pose === 'hero';
   const root = new THREE.Group();
   root.name = 'cow';
 
@@ -33,14 +36,24 @@ export function createCowModel() {
   head.position.set(0, 1.55, 0.18);
   head.castShadow = true;
   head.name = 'head';
+  // Hero pose: 头微抬、略微侧倾，呈现「自信摆 pose」
+  if (pose === 'hero') {
+    head.rotation.x = -0.18;
+    head.rotation.y = 0.08;
+    head.position.y = 1.6;
+  }
   root.add(head);
 
   const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.2), bellyMat);
   muzzle.position.set(0, 1.44, 0.43);
+  if (pose === 'hero') {
+    muzzle.position.set(0, 1.49, 0.46);
+  }
   root.add(muzzle);
 
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), darkMat);
   nose.position.set(0, 1.45, 0.54);
+  if (pose === 'hero') nose.position.set(0, 1.50, 0.58);
   root.add(nose);
 
   const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), darkMat);
@@ -74,10 +87,18 @@ export function createCowModel() {
   leftArm.position.set(-0.55, 1.28, 0.12);
   leftArm.castShadow = true;
   leftArm.name = 'leftArm';
-  root.add(leftArm);
   const rightArm = leftArm.clone();
   rightArm.position.x = 0.55;
   rightArm.name = 'rightArm';
+
+  if (pose === 'hero') {
+    // 双手胸前交叠握 AK：双臂前伸内收，托住胸前位置
+    leftArm.position.set(-0.18, 1.42, 0.42);
+    leftArm.rotation.set(-1.05, 0.0, 0.45);
+    rightArm.position.set(0.18, 1.36, 0.42);
+    rightArm.rotation.set(-1.05, 0.0, -0.45);
+  }
+  root.add(leftArm);
   root.add(rightArm);
 
   const legGeo = new THREE.BoxGeometry(0.18, 0.52, 0.2);
@@ -93,11 +114,26 @@ export function createCowModel() {
     leg.position.set(...pos);
     leg.castShadow = true;
     leg.name = 'leg';
+    if (pose === 'hero') {
+      // 微外八字 + 双腿间距略宽，立绘更稳
+      leg.position.x *= 1.12;
+    }
     root.add(leg);
     legs.push(leg);
   }
 
-  root.userData = { horns, leftArm, rightArm, legs, head };
+  let gun = null;
+  if (withGun) {
+    // 胸前斜抱 AK-47 的简化版本：直接复用 createAK47Model，按 hero 比例缩放、旋转到位
+    gun = createAK47Model();
+    gun.name = 'heroGun';
+    gun.scale.setScalar(0.92);
+    gun.position.set(0, 1.32, 0.58);
+    gun.rotation.set(0, -0.32, 0.18);
+    root.add(gun);
+  }
+
+  root.userData = { horns, leftArm, rightArm, legs, head, gun, pose };
   return root;
 }
 

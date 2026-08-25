@@ -1,7 +1,7 @@
 {
-  "name": "森林突围：黄牛 FPS",
-  "short_name": "黄牛FPS",
-  "description": "原创黄牛生存射击 Web 3D FPS",
+  "name": "牛FPS · NiuFPS",
+  "short_name": "NiuFPS",
+  "description": "NiuFPS · 牛FPS：原创 Web 3D 生存射击",
   "lang": "zh-CN",
   "start_url": "./",
   "scope": "./",

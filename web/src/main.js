@@ -14,4 +14,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-window.ForestFPS = game;
+window.NiuFPS = game;

@@ -1,4 +1,4 @@
-export const GAME_TITLE = '森林突围：黄牛 FPS';
+export const GAME_TITLE = '牛FPS · NiuFPS';
 
 export const WORLD = {
   half: 215,
@@ -64,8 +64,9 @@ export const WEAPONS = {
 };
 
 export const DIFFICULTY = {
+  // 键名稳定为 easy / normal / hard，UI 标签由 `label` 与按钮文案展示为「低 / 中 / 高」。
   easy: {
-    label: '简单',
+    label: '低',
     wolfScale: 0.55,
     wolfSpeedScale: 0.82,
     wolfDamageScale: 0.68,
@@ -73,7 +74,7 @@ export const DIFFICULTY = {
     playerDamageScale: 1.25,
   },
   normal: {
-    label: '普通',
+    label: '中',
     wolfScale: 1.0,
     wolfSpeedScale: 1.0,
     wolfDamageScale: 1.0,
@@ -81,7 +82,7 @@ export const DIFFICULTY = {
     playerDamageScale: 1.0,
   },
   hard: {
-    label: '困难',
+    label: '高',
     wolfScale: 1.5,
     wolfSpeedScale: 1.16,
     wolfDamageScale: 1.35,

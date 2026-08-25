@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ForestFPS 静态站点校验脚本。
+"""NiuFPS 静态站点校验脚本。
 
 用法：
     python tools/validate_web.py
@@ -33,6 +33,8 @@ REQUIRED_FILES = [
     "src/audio.js",
     "src/utils.js",
     "src/config.js",
+    "src/hero-scene.js",
+    "src/orientation-gate.js",
 ]
 
 IMPORT_RE = re.compile(
@@ -111,7 +113,7 @@ def main() -> int:
     else:
         print("未检测到 Node，跳过语法检查。")
 
-    print("ForestFPS 静态站点校验通过。")
+    print("NiuFPS 静态站点校验通过。")
     print(f"  入口：{WEB / 'index.html'}")
     print(f"  模块数量：{len(js_files)}")
     return 0

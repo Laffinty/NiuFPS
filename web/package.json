@@ -1,9 +1,9 @@
 {
-  "name": "forest-fps-web",
-  "version": "1.0.0",
+  "name": "niufps-web",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "原创黄牛生存射击 Web 3D FPS，静态站点可直接部署到 GitHub Pages。",
+  "description": "NiuFPS · 牛FPS 原创 Web 3D 生存射击，静态站点可直接部署到 GitHub Pages。",
   "scripts": {
     "start": "python -m http.server 8080",
     "serve": "python -m http.server 8080"
